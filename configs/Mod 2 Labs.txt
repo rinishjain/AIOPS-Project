@@ -1,0 +1,354 @@
+--------------------------------4.7.2-----------------------------------------
+vi pod.yaml
+# Make Appropriate Change to the Image URL and use.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hello-pod
+  labels:
+    zone: prod
+    version: v1
+spec:
+  containers:
+    - name: hello-ctr
+      image: iad.ocir.io/ocuocictrng24/iad-aiops-lab04-ocir-1/webapp_user16:latest
+      ports:
+        - containerPort: 8080
+  imagePullSecrets:
+    - name: ocir-secret-user16
+ 
+--------------------------------4.8.1-----------------------------------------
+
+vi deploy.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-deploy
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: hello-world
+  minReadySeconds: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: hello-world
+    spec:
+      containers:
+      - name: hello-pod
+        image: iad.ocir.io/ocuocictrng24/iad-aiops-lab04-ocir-1/webapp_user16:latest
+        ports:
+        - containerPort: 8080
+      imagePullSecrets:
+         - name: ocir-secret-user16
+
+--------------------------------4.9.1-----------------------------------------
+
+vi deploy-service.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-test
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      chapter: services
+  template:
+    metadata:
+      labels:
+        chapter: services
+    spec:
+      containers:
+      - name: hello-pod
+        image: iad.ocir.io/ocuocictrng24/iad-aiops-lab04-ocir-1/webapp_user16:latest
+        ports:
+        - containerPort: 8080
+      imagePullSecrets:
+         - name: ocir-secret-user16
+ 
+--------------------------------4.9.3-----------------------------------------
+
+# kubectl expose deployment svc-test \
+--name=hello-svc \
+--target-port=8080 \
+--type=NodePort
+ 
+
+--------------------------------5.1.1-----------------------------------------
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+kubectl version –client
+
+
+kubectl scale --replicas=3 deployment/deploy-user16 -n ns-user16
+
+kubectl delete deploy deploy-<userID> -n ns-<userID>
+
+
+--------------------------------- 7.2 --------------------------------------------
+All Commands of Lab 7 Sequence 2
+
+kubectl create ns ns-user01
+
+kubectl create deployment deploy-user01 --image=iad.ocir.io/ocuocictrng5/httpd:latest -n ns-user01
+
+
+
+
+kubectl get deploy -n ns-user16
+
+kubectl get pods -n ns-user16
+
+kubectl get svc -n ns-user16
+
+kubectl get replicaset -n ns-user16
+
+kubectl scale --replicas=3 deployment/deploy-user16 -n ns-user16
+
+kubectl get replicaset -n ns-user16
+
+kubectl get all -n ns-user16
+
+kubectl logs <podname> -n ns-user16
+
+kubectl delete deploy deploy-user16 -n ns-user16
+
+kubectl delete svc svc-user16 -n ns-user16
+
+kubectl get all -n ns-user16
+
+
+
+
+iad.ocir.io/ocuocictrng24/iad-dop-lab03-ocir-1/oci_webapp_x86_user01:latest
+
+--------------------------------- 7.3 --------------------------------------------
+All Commands of Lab 7 Sequence 3
+
+
+kubectl create secret docker-registry ocir-secret-user01 \
+--docker-server=iad.ocir.io \
+--docker-username='ocuocictrng24/98954170-lab.user01' \
+--docker-password='Fl>)8f98ZfHxMN05inA]' \
+--docker-email='user01@oracle.com' -n ns-user01
+
+
+kubectl get secrets -n ns-user01
+
+
+iad-dop-lab10-1-nt-01-user01
+IAD-DOP-LAB10-1-DP-01-user01
+
+
+iad.ocir.io/ocuocictrng24/iad-dop-lab03-ocir-1/oci_webapp_x86_user01:latest
+
+
+--------------------------------- 8.1.1 --------------------------------------------
+$ vi persistent-volume-local.yaml
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: my-persistent-volume
+  namespace: ns-user01
+spec:
+  capacity:
+    storage: 128M
+
+  accessModes:
+    - ReadWriteOnce
+
+  hostPath:
+    path: /data/my-persistent-volume/ 
+
+
+--------------------------------- 8.1.4 --------------------------------------------
+vi local-pvc-claim.yaml 
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: my-small-pvc
+  namespace: ns-user01
+spec:
+  resources:
+    requests:
+      storage: 64M
+  accessModes:
+    - ReadWriteOnce
+
+
+--------------------------------- 8.1.6 --------------------------------------------
+vi local-pvc-pod.yaml
+
+kind: Pod
+apiVersion: v1
+metadata:
+  name: my-pv-user-pod
+  namespace: ns-user01
+spec:
+  volumes:
+    - name: a-persistent-volume
+      persistentVolumeClaim:
+        claimName: my-small-pvc
+  containers:
+    - name: pv-user
+      volumeMounts:
+        - name: a-persistent-volume
+          mountPath: /var/forever
+      image: iad.ocir.io/ocuocictrng24/iad-dop-lab08-ocir-1/alpine:latest
+      command: ["/bin/sh"]
+      args: ["-c", "while true; do date >> /var/forever/file.txt; sleep 5; done"]
+
+--------------------------------- 8.2.2 --------------------------------------------
+
+vi csi-bvs-pvc.yaml
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mynginxclaim
+  namespace: ns-user01
+spec:
+  storageClassName: "oci-bv"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+
+--------------------------------- 8.2.6 --------------------------------------------
+
+vi pvc-pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: httpd
+  namespace: ns-user01
+spec:
+  containers:
+    - name: httpd
+      image: iad.ocir.io/ocuocictrng5/httpd:latest
+      ports:
+        - name: httpd
+          containerPort: 80
+      volumeMounts:
+        - name: data
+          mountPath: /var/www/html
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: mynginxclaim
+
+
+--------------------------------- 8.3.1 --------------------------------------------
+
+vi flex-bvs-pvc.yaml
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mynginxclaim1
+  namespace: ns-user01
+spec:
+  storageClassName: "oci"
+  selector:
+    matchLabels:
+      failure-domain.beta.kubernetes.io/zone: "US-ASHBURN-AD-1"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+
+--------------------------------- 8.3.4 --------------------------------------------
+
+
+vi pvc-pod2.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webserver
+  namespace: ns-user01
+spec:
+  containers:
+    - name: webserver
+      image: iad.ocir.io/ocuocictrng5/httpd:latest
+      ports:
+        - name: http
+          containerPort: 80
+      volumeMounts:
+        - name: data
+          mountPath: /var/www/html
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: mynginxclaim
+
+--------------------------------- 8.4.1 --------------------------------------------
+
+vi configmap.yaml
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: example-configmap
+  namespace: ns-user01
+data:
+  database: mongodb
+  database_uri: mongodb://localhost:27017
+  
+  keys: |
+    image.public.key=771
+    rsa.public.key=42
+
+
+--------------------------------- 8.4.3 --------------------------------------------
+
+vi pod-config-map.yaml
+
+kind: Pod
+apiVersion: v1
+metadata:
+  name: pod-using-configmap
+  namespace: ns-user01
+spec:
+  volumes:
+  - name: example-configmap-volume
+    configMap:
+      name: example-configmap
+  containers:
+    - name: container-configmap
+      image: iad.ocir.io/ocuocictrng5/httpd:latest
+      volumeMounts:
+        - name: example-configmap-volume
+          mountPath: /etc/config 
+
+
+kubectl delete -f pod-config-map.yaml
+kubectl delete -f configmap.yaml
+kubectl delete -f pvc-pod2.yaml
+kubectl delete -f flex-bvs-pvc.yaml
+kubectl delete -f pvc-pod.yaml
+kubectl delete -f csi-bvs-pvc.yaml
+kubectl delete -f local-pvc-pod.yaml
+kubectl delete -f local-pvc-claim.yaml
+kubectl delete -f persistent-volume-local.yaml
+
+
+
